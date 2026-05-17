@@ -1,0 +1,41 @@
+Neovim Shortcut Reference
+=========================
+
+Current configured shortcuts.
+
+Leader key: Space
+
+Run / Format
+------------
+F5           Run current file in the bottom terminal
+             Python:      python <current file>
+             Lua:         lua <current file>
+             JavaScript:  node <current file>
+             TypeScript:  tsx <current file>
+             Go:          go run <current file>
+
+F6           Format current file
+
+LSP / Navigation
+----------------
+K            Show hover documentation
+gd           Go to definition
+gD           Go to declaration
+gi           Go to implementation
+gr           Show references
+
+<leader>rn   Rename symbol
+<leader>ca   Code action
+
+[d           Previous diagnostic
+]d           Next diagnostic
+<leader>e    Show diagnostic for current line
+<leader>q    Send diagnostics to location list
+
+Completion
+----------
+<C-Space>    Trigger completion menu
+<CR>         Confirm selected completion item
+<Tab>        Next completion item / next snippet placeholder
+<S-Tab>      Previous completion item / previous snippet placeholder
+<C-e>        Cancel completion
