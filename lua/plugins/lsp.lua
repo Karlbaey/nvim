@@ -43,6 +43,7 @@ return {
     },
     opts = {
       automatic_installation = true,
+      automatic_enable = false,
       ensure_installed = {
         "gopls",
         "lua_ls",
@@ -57,7 +58,6 @@ return {
       "hrsh7th/cmp-nvim-lsp",
     },
     config = function()
-      local lspconfig = require("lspconfig")
       local capabilities = require("cmp_nvim_lsp").default_capabilities()
       capabilities.general = capabilities.general or {}
       capabilities.general.positionEncodings = { "utf-16" }
@@ -120,34 +120,21 @@ return {
             },
           },
         },
-      }
-
-      for server_name, server_config in pairs(servers) do
-        server_config.capabilities = capabilities
-        server_config.on_attach = on_attach
-        lspconfig[server_name].setup(server_config)
-      end
-
-      if lspconfig.ts_ls then
-        lspconfig.ts_ls.setup({
-          capabilities = capabilities,
-          on_attach = on_attach,
-        })
-      elseif lspconfig.tsserver then
-        lspconfig.tsserver.setup({
-          capabilities = capabilities,
-          on_attach = on_attach,
-        })
-      end
-
-      if lspconfig.ruff then
-        lspconfig.ruff.setup({
-          capabilities = capabilities,
+        ruff = {
           on_attach = function(client, bufnr)
             client.server_capabilities.hoverProvider = false
             on_attach(client, bufnr)
           end,
-        })
+        },
+        ts_ls = {},
+      }
+
+      for server_name, server_config in pairs(servers) do
+        vim.lsp.config(server_name, vim.tbl_deep_extend("force", {
+          capabilities = capabilities,
+          on_attach = on_attach,
+        }, server_config))
+        vim.lsp.enable(server_name)
       end
     end,
   },

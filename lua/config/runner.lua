@@ -51,10 +51,28 @@ local function build_command(filetype, filepath)
   return nil, "No runner configured for filetype: " .. filetype
 end
 
-local function get_terminal()
+local function get_terminal_module()
   local ok, terminal = pcall(require, "toggleterm.terminal")
   if not ok then
+    local ok_lazy, lazy = pcall(require, "lazy")
+    if ok_lazy then
+      lazy.load({ plugins = { "toggleterm.nvim" } })
+    end
+
+    ok, terminal = pcall(require, "toggleterm.terminal")
+  end
+
+  if not ok then
     vim.notify("toggleterm.nvim is not available yet. Run :Lazy sync first.", vim.log.levels.WARN)
+    return nil
+  end
+
+  return terminal
+end
+
+local function get_runner_terminal()
+  local terminal = get_terminal_module()
+  if not terminal then
     return nil
   end
 
@@ -67,6 +85,37 @@ local function get_terminal()
   end
 
   return M.runner
+end
+
+local function get_shell_terminal()
+  local terminal = get_terminal_module()
+  if not terminal then
+    return nil
+  end
+
+  if not M.shell then
+    M.shell = terminal.Terminal:new({
+      direction = "horizontal",
+      hidden = true,
+      close_on_exit = false,
+    })
+  end
+
+  return M.shell
+end
+
+function M.toggle_terminal()
+  if M.runner then
+    M.runner:toggle()
+    return
+  end
+
+  local terminal = get_shell_terminal()
+  if not terminal then
+    return
+  end
+
+  terminal:toggle()
 end
 
 function M.run_current_file()
@@ -86,7 +135,7 @@ function M.run_current_file()
     return
   end
 
-  local terminal = get_terminal()
+  local terminal = get_runner_terminal()
   if not terminal then
     return
   end

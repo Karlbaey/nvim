@@ -34,3 +34,34 @@ autocmd("TermOpen", {
     vim.opt_local.relativenumber = false
   end,
 })
+
+autocmd({ "BufReadPost", "BufNewFile" }, {
+  group = group,
+  pattern = "*",
+  callback = function(args)
+    if vim.bo[args.buf].buftype == "" then
+      vim.bo[args.buf].fileformat = "dos"
+    end
+  end,
+})
+
+autocmd("FileType", {
+  group = group,
+  pattern = {
+    "lua",
+    "python",
+    "javascript",
+    "javascriptreact",
+    "typescript",
+    "typescriptreact",
+    "go",
+    "vim",
+  },
+  callback = function(args)
+    pcall(vim.treesitter.start, args.buf)
+
+    if args.match ~= "go" then
+      vim.bo[args.buf].indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
+    end
+  end,
+})

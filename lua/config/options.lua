@@ -27,3 +27,5 @@ opt.updatetime = 250
 opt.timeoutlen = 400
 opt.completeopt = { "menu", "menuone", "noselect" }
 opt.clipboard = "unnamedplus"
+opt.fileformats = { "dos", "unix" }
+opt.fileformat = "dos"

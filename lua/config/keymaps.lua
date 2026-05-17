@@ -1,5 +1,13 @@
 local map = vim.keymap.set
 
+map("n", "<C-j>", function()
+  require("config.runner").toggle_terminal()
+end, { desc = "Toggle terminal" })
+
+map("t", "<C-j>", [[<C-\><C-n><Cmd>lua require("config.runner").toggle_terminal()<CR>]], {
+  desc = "Toggle terminal",
+})
+
 map("n", "<F5>", function()
   require("config.runner").run_current_file()
 end, { desc = "Run current file" })

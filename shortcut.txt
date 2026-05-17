@@ -7,6 +7,10 @@ Leader key: Space
 
 Run / Format
 ------------
+Ctrl+J       Toggle terminal
+             If the run terminal already exists, toggle that terminal
+             Otherwise open or close a normal shell terminal
+
 F5           Run current file in the bottom terminal
              Python:      python <current file>
              Lua:         lua <current file>
