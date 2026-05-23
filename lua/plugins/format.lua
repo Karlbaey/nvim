@@ -17,7 +17,7 @@ return {
       return {
         notify_no_formatters = true,
         formatters_by_ft = {
-          go = { "goimports", "gofmt" },
+          go = { "goimports" },
           javascript = { "prettierd" },
           javascriptreact = { "prettierd" },
           lua = { "stylua" },
@@ -26,13 +26,14 @@ return {
           typescriptreact = { "prettierd" },
         },
         format_on_save = function(bufnr)
-          if not format_filetypes[vim.bo[bufnr].filetype] then
+          local filetype = vim.bo[bufnr].filetype
+          if not format_filetypes[filetype] then
             return
           end
 
           return {
             lsp_fallback = true,
-            timeout_ms = 1000,
+            timeout_ms = filetype == "go" and 5000 or 1000,
           }
         end,
       }

@@ -37,6 +37,6 @@ require("lazy").setup({
     notify = false,
   },
   install = {
-    colorscheme = { "habamax" },
+    colorscheme = { "monokai", "habamax" },
   },
 })

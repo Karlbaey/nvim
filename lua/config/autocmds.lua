@@ -26,6 +26,23 @@ autocmd("FileType", {
   end,
 })
 
+autocmd("FileType", {
+  group = group,
+  pattern = "python",
+  callback = function()
+    vim.opt_local.autoindent = true
+    vim.opt_local.smartindent = true
+  end,
+})
+
+autocmd("FileType", {
+  group = group,
+  pattern = "go",
+  callback = function(args)
+    require("config.go").setup_keymaps(args.buf)
+  end,
+})
+
 autocmd("TermOpen", {
   group = group,
   pattern = "*",
@@ -60,7 +77,7 @@ autocmd("FileType", {
   callback = function(args)
     pcall(vim.treesitter.start, args.buf)
 
-    if args.match ~= "go" then
+    if args.match ~= "go" and args.match ~= "python" then
       vim.bo[args.buf].indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
     end
   end,

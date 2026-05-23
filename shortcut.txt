@@ -20,6 +20,18 @@ F5           Run current file in the bottom terminal
 
 F6           Format current file
 
+Go Workflow
+-----------
+These mappings are buffer-local and only exist in `filetype=go` buffers.
+
+F7           Run `go test` in the current package directory
+F8           Run the current `Test*`, `Benchmark*`, or `Example*` target
+
+<leader>ga   Run `go test ./...` from the nearest module root
+<leader>gr   Run `go run .` from the current package directory
+<leader>gt   Switch between `foo.go` and `foo_test.go`
+<leader>gi   Organize imports through `gopls`
+
 LSP / Navigation
 ----------------
 K            Show hover documentation

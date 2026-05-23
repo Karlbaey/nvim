@@ -139,6 +139,11 @@ return {
     end,
   },
   {
+    "windwp/nvim-autopairs",
+    event = "InsertEnter",
+    opts = {},
+  },
+  {
     "hrsh7th/nvim-cmp",
     event = "InsertEnter",
     dependencies = {
@@ -148,9 +153,11 @@ return {
       "hrsh7th/cmp-path",
       "rafamadriz/friendly-snippets",
       "saadparwaiz1/cmp_luasnip",
+      "windwp/nvim-autopairs",
     },
     config = function()
       local cmp = require("cmp")
+      local cmp_autopairs = require("nvim-autopairs.completion.cmp")
       local luasnip = require("luasnip")
 
       require("luasnip.loaders.from_vscode").lazy_load()
@@ -165,8 +172,8 @@ return {
           ["<C-Space>"] = cmp.mapping.complete(),
           ["<C-e>"] = cmp.mapping.abort(),
           ["<CR>"] = cmp.mapping(function(fallback)
-            if cmp.visible() and cmp.get_active_entry() then
-              cmp.confirm({ select = false })
+            if cmp.visible() then
+              cmp.confirm({ select = true })
             else
               fallback()
             end
@@ -197,6 +204,8 @@ return {
           { name = "buffer" },
         }),
       })
+
+      cmp.event:on("confirm_done", cmp_autopairs.on_confirm_done())
     end,
   },
 }

@@ -1,3 +1,5 @@
+local uv = vim.uv or vim.loop
+
 local M = {}
 
 local function first_executable(candidates)
@@ -49,6 +51,11 @@ local function build_command(filetype, filepath)
   end
 
   return nil, "No runner configured for filetype: " .. filetype
+end
+
+local function is_directory(path)
+  local stat = uv.fs_stat(path)
+  return stat and stat.type == "directory"
 end
 
 local function get_terminal_module()
@@ -118,6 +125,31 @@ function M.toggle_terminal()
   terminal:toggle()
 end
 
+function M.execute(command, opts)
+  opts = opts or {}
+
+  local terminal = get_runner_terminal()
+  if not terminal then
+    return
+  end
+
+  if opts.cwd then
+    local cwd = vim.fs.normalize(opts.cwd)
+    if not is_directory(cwd) then
+      vim.notify("Working directory does not exist: " .. cwd, vim.log.levels.WARN)
+      return
+    end
+
+    terminal:open()
+    terminal:send("cd " .. vim.fn.shellescape(cwd), false)
+    terminal:send(command, false)
+    return
+  end
+
+  terminal:open()
+  terminal:send(command, false)
+end
+
 function M.run_current_file()
   local filepath = vim.api.nvim_buf_get_name(0)
   if filepath == "" then
@@ -135,13 +167,7 @@ function M.run_current_file()
     return
   end
 
-  local terminal = get_runner_terminal()
-  if not terminal then
-    return
-  end
-
-  terminal:open()
-  terminal:send(command, false)
+  M.execute(command)
 end
 
 return M
