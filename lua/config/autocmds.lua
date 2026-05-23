@@ -43,6 +43,14 @@ autocmd("FileType", {
   end,
 })
 
+autocmd("FileType", {
+  group = group,
+  pattern = "markdown",
+  callback = function(args)
+    require("config.markdown").setup_keymaps(args.buf)
+  end,
+})
+
 autocmd("TermOpen", {
   group = group,
   pattern = "*",

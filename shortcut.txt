@@ -20,6 +20,15 @@ F5           Run current file in the bottom terminal
 
 F6           Format current file
 
+Markdown Workflow
+-----------------
+These mappings are buffer-local and only exist in `filetype=markdown` buffers.
+
+F5           Toggle live Markdown rendering in the current buffer
+             Provided by `marklive.nvim`
+
+<leader>mp   Toggle live Markdown rendering in the current buffer
+
 Go Workflow
 -----------
 These mappings are buffer-local and only exist in `filetype=go` buffers.

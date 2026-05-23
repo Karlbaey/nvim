@@ -8,6 +8,8 @@ return {
         "go",
         "javascript",
         "lua",
+        "markdown",
+        "markdown_inline",
         "python",
         "tsx",
         "typescript",
