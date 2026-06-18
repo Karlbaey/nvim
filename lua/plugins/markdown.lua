@@ -1,13 +1,18 @@
 return {
   {
-    "yelog/marklive.nvim",
+    "MeanderingProgrammer/render-markdown.nvim",
     ft = "markdown",
     dependencies = {
       "nvim-treesitter/nvim-treesitter",
+      "nvim-tree/nvim-web-devicons",
     },
-    opts = {},
+    ---@module "render-markdown"
+    ---@type render.md.UserConfig
+    opts = {
+      enabled = false,
+    },
     config = function(_, opts)
-      require("marklive").setup(opts)
+      require("render-markdown").setup(opts)
     end,
   },
 }

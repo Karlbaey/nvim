@@ -15,8 +15,8 @@ function M.setup_keymaps(bufnr)
     })
   end
 
-  map("<F5>", "<Cmd>MarkliveToggle<CR>", "Markdown: toggle live render")
-  map("<leader>mp", "<Cmd>MarkliveToggle<CR>", "Markdown: toggle live render")
+  map("<F5>", "<Cmd>RenderMarkdown buf_toggle<CR>", "Markdown: toggle live render")
+  map("<leader>mp", "<Cmd>RenderMarkdown buf_toggle<CR>", "Markdown: toggle live render")
 end
 
 return M

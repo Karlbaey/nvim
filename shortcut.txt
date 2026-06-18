@@ -35,11 +35,11 @@ These mappings are buffer-local and only exist in `filetype=python` buffers.
 
 F5           Run current Python file
              In visual mode: run selected code
-F6           Open Python REPL (interactive interpreter)
 F7           Run pytest on current file (requires pytest)
 F8           Run pytest on current function (requires pytest)
 
 <leader>pi   Organize imports through `ruff`
+<leader>pr   Open Python REPL (interactive interpreter)
 
 Go Workflow
 -----------

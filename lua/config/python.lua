@@ -176,10 +176,6 @@ function M.setup_keymaps(bufnr)
     M.run_selection()
   end, "Python: run selection")
 
-  map("n", "<F6>", function()
-    M.open_repl()
-  end, "Python: open REPL")
-
   map("n", "<F7>", function()
     M.run_pytest_file(bufnr)
   end, "Python: run pytest on file")
@@ -191,6 +187,10 @@ function M.setup_keymaps(bufnr)
   map("n", "<leader>pi", function()
     M.organize_imports(bufnr)
   end, "Python: organize imports")
+
+  map("n", "<leader>pr", function()
+    M.open_repl()
+  end, "Python: open REPL")
 end
 
 return M
