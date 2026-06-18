@@ -75,6 +75,12 @@ return {
       })
 
       local function on_attach(client, bufnr)
+        if client.name == "gopls" then
+          vim.lsp.semantic_tokens.enable(true, {
+            bufnr = bufnr,
+          })
+        end
+
         local map = function(mode, lhs, rhs, desc)
           vim.keymap.set(mode, lhs, rhs, {
             buffer = bufnr,
@@ -93,7 +99,13 @@ return {
       end
 
       local servers = {
-        gopls = {},
+        gopls = {
+          settings = {
+            gopls = {
+              semanticTokens = true,
+            },
+          },
+        },
         lua_ls = {
           settings = {
             Lua = {
@@ -114,8 +126,14 @@ return {
             python = {
               analysis = {
                 autoSearchPaths = true,
+                diagnosticMode = "workspace",
                 typeCheckingMode = "basic",
                 useLibraryCodeForTypes = true,
+                autoImportCompletions = true,
+                diagnosticSeverityOverrides = {
+                  reportUnusedImport = "information",
+                  reportUnusedVariable = "information",
+                },
               },
             },
           },
@@ -125,6 +143,10 @@ return {
             client.server_capabilities.hoverProvider = false
             on_attach(client, bufnr)
           end,
+          settings = {
+            organizeImports = true,
+            fixAll = true,
+          },
         },
         ts_ls = {},
       }

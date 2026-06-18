@@ -1,5 +1,6 @@
 local autocmd = vim.api.nvim_create_autocmd
 local group = vim.api.nvim_create_augroup("custom_config", { clear = true })
+local treesitter_warned = {}
 
 local indent_by_ft = {
   lua = { shiftwidth = 2, tabstop = 2, softtabstop = 2, expandtab = true },
@@ -29,9 +30,10 @@ autocmd("FileType", {
 autocmd("FileType", {
   group = group,
   pattern = "python",
-  callback = function()
+  callback = function(args)
     vim.opt_local.autoindent = true
     vim.opt_local.smartindent = true
+    require("config.python").setup_keymaps(args.buf)
   end,
 })
 
@@ -83,7 +85,18 @@ autocmd("FileType", {
     "vim",
   },
   callback = function(args)
-    pcall(vim.treesitter.start, args.buf)
+    local ok = pcall(vim.treesitter.start, args.buf)
+    if not ok and not treesitter_warned[args.match] then
+      treesitter_warned[args.match] = true
+      vim.schedule(function()
+        vim.notify(
+          ("Tree-sitter parser for %s is unavailable. Run :TSInstallCore to install configured parsers."):format(
+            args.match
+          ),
+          vim.log.levels.WARN
+        )
+      end)
+    end
 
     if args.match ~= "go" and args.match ~= "python" then
       vim.bo[args.buf].indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
