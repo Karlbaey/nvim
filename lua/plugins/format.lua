@@ -23,7 +23,7 @@ return {
           javascriptreact = { "prettierd" },
           lua = { "stylua" },
           markdown = { "prettierd" },
-          python = { "ruff_format" },
+          python = { "ruff_fix", "ruff_organize_imports", "ruff_format" },
           typescript = { "prettierd" },
           typescriptreact = { "prettierd" },
         },

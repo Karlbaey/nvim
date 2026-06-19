@@ -51,6 +51,26 @@ local function run_command(command, cwd)
   require("config.runner").execute(command, { cwd = cwd })
 end
 
+local function get_dap()
+  local ok, dap = pcall(require, "dap")
+  if not ok then
+    warn("nvim-dap is not available yet. Run :Lazy sync first.")
+    return nil
+  end
+
+  return dap
+end
+
+local function get_dap_python()
+  local ok, dap_python = pcall(require, "dap-python")
+  if not ok then
+    warn("nvim-dap-python is not available yet. Run :Lazy sync first.")
+    return nil
+  end
+
+  return dap_python
+end
+
 function M.run_file(bufnr)
   bufnr = bufnr or vim.api.nvim_get_current_buf()
 
@@ -131,6 +151,101 @@ function M.run_pytest_function(bufnr)
   end
 end
 
+function M.debug_file(bufnr)
+  bufnr = bufnr or vim.api.nvim_get_current_buf()
+
+  local dap = get_dap()
+  local path = get_buffer_path(bufnr)
+  if not dap or not path or not write_if_modified(bufnr) then
+    return
+  end
+
+  dap.run({
+    type = "python",
+    request = "launch",
+    name = "Debug current file",
+    program = path,
+    cwd = vim.fn.getcwd(),
+    console = "integratedTerminal",
+    justMyCode = true,
+  })
+end
+
+function M.debug_test_method(bufnr)
+  bufnr = bufnr or vim.api.nvim_get_current_buf()
+
+  local dap_python = get_dap_python()
+  local path = get_buffer_path(bufnr)
+  if not dap_python or not path or not write_if_modified(bufnr) then
+    return
+  end
+
+  dap_python.test_method()
+end
+
+function M.toggle_breakpoint()
+  local dap = get_dap()
+  if not dap then
+    return
+  end
+
+  dap.toggle_breakpoint()
+end
+
+function M.continue_debug()
+  local dap = get_dap()
+  if not dap then
+    return
+  end
+
+  dap.continue()
+end
+
+function M.step_over()
+  local dap = get_dap()
+  if not dap then
+    return
+  end
+
+  dap.step_over()
+end
+
+function M.step_into()
+  local dap = get_dap()
+  if not dap then
+    return
+  end
+
+  dap.step_into()
+end
+
+function M.step_out()
+  local dap = get_dap()
+  if not dap then
+    return
+  end
+
+  dap.step_out()
+end
+
+function M.open_debug_repl()
+  local dap = get_dap()
+  if not dap then
+    return
+  end
+
+  dap.repl.open()
+end
+
+function M.terminate_debug()
+  local dap = get_dap()
+  if not dap then
+    return
+  end
+
+  dap.terminate()
+end
+
 function M.organize_imports(bufnr)
   bufnr = bufnr or vim.api.nvim_get_current_buf()
 
@@ -191,6 +306,58 @@ function M.setup_keymaps(bufnr)
   map("n", "<leader>pr", function()
     M.open_repl()
   end, "Python: open REPL")
+
+  map("n", "<F9>", function()
+    M.toggle_breakpoint()
+  end, "Python: toggle breakpoint")
+
+  map("n", "<F10>", function()
+    M.continue_debug()
+  end, "Python: start or continue debugging")
+
+  map("n", "<F11>", function()
+    M.step_into()
+  end, "Python: step into")
+
+  map("n", "<F12>", function()
+    M.step_over()
+  end, "Python: step over")
+
+  map("n", "<leader>pd", function()
+    M.debug_file(bufnr)
+  end, "Python: debug current file")
+
+  map("n", "<leader>pt", function()
+    M.debug_test_method(bufnr)
+  end, "Python: debug nearest pytest test")
+
+  map("n", "<leader>pc", function()
+    M.continue_debug()
+  end, "Python: continue debugging")
+
+  map("n", "<leader>pb", function()
+    M.toggle_breakpoint()
+  end, "Python: toggle breakpoint")
+
+  map("n", "<leader>po", function()
+    M.step_over()
+  end, "Python: step over")
+
+  map("n", "<leader>pn", function()
+    M.step_into()
+  end, "Python: step into")
+
+  map("n", "<leader>pO", function()
+    M.step_out()
+  end, "Python: step out")
+
+  map("n", "<leader>pp", function()
+    M.open_debug_repl()
+  end, "Python: open DAP REPL")
+
+  map("n", "<leader>px", function()
+    M.terminate_debug()
+  end, "Python: terminate debug session")
 end
 
 return M

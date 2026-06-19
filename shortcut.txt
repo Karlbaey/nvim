@@ -37,9 +37,22 @@ F5           Run current Python file
              In visual mode: run selected code
 F7           Run pytest on current file (requires pytest)
 F8           Run pytest on current function (requires pytest)
+F9           Toggle Python breakpoint
+F10          Start or continue Python debugging
+F11          Step into during Python debugging
+F12          Step over during Python debugging
 
 <leader>pi   Organize imports through `ruff`
 <leader>pr   Open Python REPL (interactive interpreter)
+<leader>pb   Toggle Python breakpoint
+<leader>pc   Continue current Python debug session
+<leader>pd   Debug current Python file
+<leader>pn   Step into during Python debugging
+<leader>po   Step over during Python debugging
+<leader>pO   Step out during Python debugging
+<leader>pp   Open the DAP REPL for Python debugging
+<leader>pt   Debug the nearest pytest test under the cursor
+<leader>px   Terminate the current Python debug session
 
 Go Workflow
 -----------

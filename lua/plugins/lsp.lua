@@ -22,6 +22,7 @@ return {
     },
     opts = {
       ensure_installed = {
+        "debugpy",
         "goimports",
         "gopls",
         "lua-language-server",
