@@ -1,2 +1,6 @@
 # 日志文件
 *.log
+
+# Reasonix
+reasonix.toml
+session*.md
