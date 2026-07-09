@@ -32,7 +32,6 @@ autocmd("FileType", {
   pattern = "python",
   callback = function(args)
     vim.opt_local.autoindent = true
-    vim.opt_local.smartindent = true
     require("config.python").setup_keymaps(args.buf)
 
     -- Schedule venv detection so it doesn't block buffer open
@@ -123,8 +122,6 @@ autocmd("FileType", {
       end)
     end
 
-    if args.match ~= "go" and args.match ~= "python" then
-      vim.bo[args.buf].indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
-    end
+    vim.bo[args.buf].indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
   end,
 })

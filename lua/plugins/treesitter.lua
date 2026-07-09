@@ -91,6 +91,9 @@ return {
 
       nvim_treesitter.setup({
         install_dir = vim.fn.stdpath("data") .. "/site",
+        indent = {
+          enable = true,
+        },
       })
 
       vim.api.nvim_create_user_command("TSInstallCore", function()

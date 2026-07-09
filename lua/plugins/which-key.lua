@@ -18,9 +18,10 @@ return {
         separator = "›",
         group = "+",
       },
-      window = {
-        border = "rounded",
-        position = "bottom",
+      plugins = {
+        presets = {
+          g = false, -- disables g-prefix help to avoid Neovim built-in gc/gcc overlap
+        },
       },
     },
   },
