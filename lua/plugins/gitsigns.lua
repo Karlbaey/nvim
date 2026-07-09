@@ -17,8 +17,12 @@ return {
       },
       on_attach = function(bufnr)
         local gs = package.loaded.gitsigns
-        local function map(mode, lhs, rhs, desc)
-          vim.keymap.set(mode, lhs, rhs, { buffer = bufnr, desc = desc, silent = true })
+        local function map(mode, lhs, rhs, opts)
+          if type(opts) == "string" then
+            opts = { desc = opts }
+          end
+          opts = vim.tbl_extend("force", { buffer = bufnr, silent = true }, opts or {})
+          vim.keymap.set(mode, lhs, rhs, opts)
         end
 
         map("n", "]c", function()
