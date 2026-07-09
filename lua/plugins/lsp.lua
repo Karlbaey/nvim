@@ -123,6 +123,23 @@ return {
           },
         },
         pyright = {
+          on_init = function(client)
+            -- Point pyright at the project venv so it resolves packages correctly
+            local root = client.config.root_dir
+            if root then
+              local venv = require("config.python_venv").scan_directory(root)
+              if venv then
+                client.config.settings = vim.tbl_deep_extend(
+                  "force",
+                  client.config.settings or {},
+                  { python = { pythonPath = venv.python_path } }
+                )
+                client.notify("workspace/didChangeConfiguration", {
+                  settings = client.config.settings,
+                })
+              end
+            end
+          end,
           settings = {
             python = {
               analysis = {

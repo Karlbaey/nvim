@@ -11,8 +11,6 @@ return {
         lua = true,
         markdown = true,
         python = true,
-        typescript = true,
-        typescriptreact = true,
       }
 
       return {

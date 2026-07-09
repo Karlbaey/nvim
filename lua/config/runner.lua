@@ -10,10 +10,16 @@ local function first_executable(candidates)
   end
 end
 
-local function build_command(filetype, filepath)
+local function build_command(filetype, filepath, bufnr)
   local escaped = vim.fn.shellescape(filepath)
 
   if filetype == "python" then
+    -- Prefer venv Python so it picks up project-local packages
+    local venv_cmd = require("config.python_venv").get_python_command(bufnr or 0)
+    if venv_cmd then
+      return venv_cmd .. " " .. escaped
+    end
+
     local executable = first_executable({ "python", "py" })
     if not executable then
       return nil, "Python runtime not found in PATH. Expected `python` or `py`."

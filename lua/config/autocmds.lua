@@ -34,6 +34,31 @@ autocmd("FileType", {
     vim.opt_local.autoindent = true
     vim.opt_local.smartindent = true
     require("config.python").setup_keymaps(args.buf)
+
+    -- Schedule venv detection so it doesn't block buffer open
+    vim.schedule(function()
+      if vim.api.nvim_buf_is_valid(args.buf) then
+        local venv = require("config.python_venv")
+        local name = venv.get_venv_name(args.buf)
+        if args.buf == vim.api.nvim_get_current_buf() then
+          vim.g.python_venv_name = name or ""
+        end
+      end
+    end)
+  end,
+})
+
+autocmd("BufEnter", {
+  group = group,
+  pattern = "*",
+  callback = function(args)
+    if vim.bo[args.buf].filetype == "python" then
+      local venv = require("config.python_venv")
+      local name = venv.get_venv_name(args.buf)
+      vim.g.python_venv_name = name or ""
+    else
+      vim.g.python_venv_name = ""
+    end
   end,
 })
 

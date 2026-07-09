@@ -40,7 +40,13 @@ local function write_if_modified(bufnr)
   return false
 end
 
-local function get_python_command()
+local function get_python_command(bufnr)
+  -- Prefer venv Python when available
+  local venv_cmd = require("config.python_venv").get_python_command(bufnr)
+  if venv_cmd then
+    return venv_cmd
+  end
+
   if vim.fn.executable("python3") == 1 then
     return "python3"
   end
@@ -83,7 +89,7 @@ function M.run_file(bufnr)
     return
   end
 
-  local python_cmd = get_python_command()
+  local python_cmd = get_python_command(bufnr)
   run_command(python_cmd .. " " .. vim.fn.shellescape(path), vim.fn.getcwd())
 end
 
@@ -101,7 +107,7 @@ function M.run_selection()
   local lines = vim.api.nvim_buf_get_lines(0, start_line - 1, end_line, false)
   local code = table.concat(lines, "\n")
 
-  local python_cmd = get_python_command()
+  local python_cmd = get_python_command(0)
   run_command(python_cmd .. " -c " .. vim.fn.shellescape(code), vim.fn.getcwd())
 end
 
@@ -110,33 +116,42 @@ function M.open_repl()
     return
   end
 
-  local python_cmd = get_python_command()
+  local python_cmd = get_python_command(0)
   vim.cmd("TermExec cmd='" .. python_cmd .. "'")
+end
+
+local function get_pytest_command(bufnr, file_path)
+  -- Use venv Python to run pytest module so we pick up venv-installed pytest
+  local venv_cmd = require("config.python_venv").get_python_command(bufnr)
+  if venv_cmd then
+    return venv_cmd .. " -m pytest " .. vim.fn.shellescape(file_path) .. " -v"
+  end
+
+  -- Fallback: system pytest
+  if vim.fn.executable("pytest") ~= 1 then
+    warn("pytest not found in PATH. Install it with: pip install pytest")
+    return nil
+  end
+
+  return "pytest " .. vim.fn.shellescape(file_path) .. " -v"
 end
 
 function M.run_pytest_file(bufnr)
   bufnr = bufnr or vim.api.nvim_get_current_buf()
-
-  if vim.fn.executable("pytest") ~= 1 then
-    warn("pytest not found in PATH. Install it with: pip install pytest")
-    return
-  end
 
   local path = get_buffer_path(bufnr)
   if not path or not write_if_modified(bufnr) then
     return
   end
 
-  run_command("pytest " .. vim.fn.shellescape(path) .. " -v", vim.fn.getcwd())
+  local cmd = get_pytest_command(bufnr, path)
+  if cmd then
+    run_command(cmd, vim.fn.getcwd())
+  end
 end
 
 function M.run_pytest_function(bufnr)
   bufnr = bufnr or vim.api.nvim_get_current_buf()
-
-  if vim.fn.executable("pytest") ~= 1 then
-    warn("pytest not found in PATH. Install it with: pip install pytest")
-    return
-  end
 
   local path = get_buffer_path(bufnr)
   if not path or not write_if_modified(bufnr) then
@@ -144,10 +159,14 @@ function M.run_pytest_function(bufnr)
   end
 
   local function_name = vim.fn.expand("<cword>")
-  if function_name:match("^test_") or function_name:match("^Test") then
-    run_command("pytest " .. vim.fn.shellescape(path) .. "::" .. function_name .. " -v", vim.fn.getcwd())
-  else
+  if not (function_name:match("^test_") or function_name:match("^Test")) then
     warn("Cursor is not on a test function (must start with 'test_' or 'Test')")
+    return
+  end
+
+  local cmd = get_pytest_command(bufnr, path .. "::" .. function_name)
+  if cmd then
+    run_command(cmd, vim.fn.getcwd())
   end
 end
 
@@ -160,7 +179,7 @@ function M.debug_file(bufnr)
     return
   end
 
-  dap.run({
+  local launch_config = {
     type = "python",
     request = "launch",
     name = "Debug current file",
@@ -168,7 +187,15 @@ function M.debug_file(bufnr)
     cwd = vim.fn.getcwd(),
     console = "integratedTerminal",
     justMyCode = true,
-  })
+  }
+
+  -- Point debugpy at the venv Python so it resolves venv packages
+  local venv_path = require("config.python_venv").get_python_path(bufnr)
+  if venv_path then
+    launch_config.python = venv_path
+  end
+
+  dap.run(launch_config)
 end
 
 function M.debug_test_method(bufnr)
