@@ -20,6 +20,10 @@ F5           Run current file in the bottom terminal
 
 F6           Format current file
 
+Ctrl+/       Toggle comment
+             Normal mode: comment or uncomment current line
+             Visual mode: comment or uncomment selected lines
+
 Markdown Workflow
 -----------------
 These mappings are buffer-local and only exist in `filetype=markdown` buffers.

@@ -25,6 +25,11 @@ map("n", "<F6>", function()
   })
 end, { desc = "Format current file" })
 
+for _, lhs in ipairs({ "<C-/>", "<C-_>" }) do
+  map("n", lhs, "gcc", { desc = "Toggle comment line", remap = true })
+  map("x", lhs, "gc", { desc = "Toggle comment selection", remap = true })
+end
+
 map("n", "<leader>e", vim.diagnostic.open_float, { desc = "Line diagnostics" })
 map("n", "<leader>q", vim.diagnostic.setloclist, { desc = "Diagnostics to location list" })
 map("n", "[d", vim.diagnostic.goto_prev, { desc = "Previous diagnostic" })
