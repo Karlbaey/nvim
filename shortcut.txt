@@ -48,6 +48,8 @@ F12          Step over during Python debugging
 
 <leader>pi   Organize imports through `ruff`
 <leader>pr   Open Python REPL (interactive interpreter)
+<leader>ve   Activate the nearest Python virtual environment
+<leader>+ve  Same as <leader>ve
 <leader>pb   Toggle Python breakpoint
 <leader>pc   Continue current Python debug session
 <leader>pd   Debug current Python file

@@ -100,29 +100,13 @@ return {
         map("n", "<leader>ca", vim.lsp.buf.code_action, "Code action")
       end
 
-      local function apply_pyright_venv(config, root_dir)
-        local python_venv = require("config.python_venv")
-        local venv = python_venv.detect_for_dir(root_dir or config.root_dir)
-        if not venv then
+      local function apply_pyright_venv(config)
+        local pyright_settings = require("config.python_venv").pyright_settings()
+        if not pyright_settings then
           return false
         end
 
-        local python_settings = {
-          pythonPath = venv.python_path,
-          venvPath = vim.fs.dirname(venv.venv_dir),
-          venv = venv.venv_name,
-        }
-
-        local site_packages = python_venv.get_site_packages(venv)
-        if #site_packages > 0 then
-          python_settings.analysis = {
-            extraPaths = site_packages,
-          }
-        end
-
-        config.settings = vim.tbl_deep_extend("force", config.settings or {}, {
-          python = python_settings,
-        })
+        config.settings = vim.tbl_deep_extend("force", config.settings or {}, pyright_settings)
         return true
       end
 
@@ -181,13 +165,13 @@ return {
         pyright = {
           root_dir = pyright_root_dir,
           before_init = function(_, config)
-            apply_pyright_venv(config, config.root_dir)
+            apply_pyright_venv(config)
           end,
-          on_new_config = function(config, root_dir)
-            apply_pyright_venv(config, root_dir)
+          on_new_config = function(config)
+            apply_pyright_venv(config)
           end,
           on_init = function(client)
-            if apply_pyright_venv(client.config, client.config.root_dir) then
+            if apply_pyright_venv(client.config) then
               client:notify("workspace/didChangeConfiguration", {
                 settings = client.config.settings,
               })

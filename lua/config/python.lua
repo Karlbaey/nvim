@@ -23,6 +23,15 @@ local function get_buffer_path(bufnr)
   return vim.fs.normalize(path)
 end
 
+local function get_buffer_dir(bufnr)
+  local path = vim.api.nvim_buf_get_name(bufnr)
+  if path ~= "" then
+    return vim.fs.dirname(vim.fs.normalize(path))
+  end
+
+  return vim.fn.getcwd()
+end
+
 local function write_if_modified(bufnr)
   if not vim.bo[bufnr].modified then
     return true
@@ -295,12 +304,78 @@ function M.organize_imports(bufnr)
   })
 end
 
+local function restart_pyright()
+  if not vim.lsp or not vim.lsp.enable then
+    return
+  end
+
+  pcall(vim.lsp.enable, "pyright", false)
+  vim.defer_fn(function()
+    pcall(vim.lsp.enable, "pyright", true)
+  end, 200)
+end
+
+local function notify_pyright_settings()
+  local pyright_settings = require("config.python_venv").pyright_settings()
+  if not pyright_settings then
+    return
+  end
+
+  for _, client in ipairs(vim.lsp.get_clients({ name = "pyright" })) do
+    client.config.settings = vim.tbl_deep_extend("force", client.config.settings or {}, pyright_settings)
+    client:notify("workspace/didChangeConfiguration", {
+      settings = client.config.settings,
+    })
+  end
+end
+
+function M.activate_venv(bufnr)
+  bufnr = bufnr or vim.api.nvim_get_current_buf()
+
+  local venv = require("config.python_venv").activate(get_buffer_dir(bufnr))
+  if not venv then
+    warn("Python virtual environment not found. Expected .venv/venv, VIRTUAL_ENV, or UV_PROJECT_ENVIRONMENT.")
+    return
+  end
+
+  notify_pyright_settings()
+  restart_pyright()
+  vim.notify(("Python venv activated: %s"):format(venv.venv_dir), vim.log.levels.INFO)
+end
+
+function M.deactivate_venv()
+  require("config.python_venv").deactivate()
+  restart_pyright()
+  vim.notify("Python venv deactivated.", vim.log.levels.INFO)
+end
+
+function M.setup_commands()
+  if M._commands_created then
+    return
+  end
+
+  M._commands_created = true
+
+  vim.api.nvim_create_user_command("PythonVenvActivate", function()
+    M.activate_venv()
+  end, {
+    desc = "Activate the nearest Python virtual environment",
+  })
+
+  vim.api.nvim_create_user_command("PythonVenvDeactivate", function()
+    M.deactivate_venv()
+  end, {
+    desc = "Deactivate the active Python virtual environment",
+  })
+end
+
 function M.setup_keymaps(bufnr)
   if vim.b[bufnr].python_workflow_keymaps then
     return
   end
 
   vim.b[bufnr].python_workflow_keymaps = true
+  M.setup_commands()
 
   local map = function(mode, lhs, rhs, desc)
     vim.keymap.set(mode, lhs, rhs, {
@@ -333,6 +408,14 @@ function M.setup_keymaps(bufnr)
   map("n", "<leader>pr", function()
     M.open_repl()
   end, "Python: open REPL")
+
+  map("n", "<leader>ve", function()
+    M.activate_venv(bufnr)
+  end, "Python: activate venv")
+
+  map("n", "<leader>+ve", function()
+    M.activate_venv(bufnr)
+  end, "Python: activate venv")
 
   map("n", "<F9>", function()
     M.toggle_breakpoint()

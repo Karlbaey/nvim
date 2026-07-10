@@ -1,9 +1,15 @@
 local M = {}
 
+-- Active venv set by user via <leader>ve (nil = no venv manually activated)
+M._active_venv = nil
+M._active_bin_dir = nil
+local original_env = nil
+
 -- Cache: bufnr → { python_path, venv_name, venv_dir } or false (scanned but not found)
 local cache = {}
 
 local is_windows = vim.fn.has("win32") == 1
+local path_separator = is_windows and ";" or ":"
 local venv_names = { ".venv", "venv" }
 local project_markers = {
   ".git",
@@ -83,6 +89,76 @@ local function venv_from_dir(venv_dir, venv_name)
     }
   end
   return nil
+end
+
+local function venv_bin_dir(venv)
+  return vim.fs.joinpath(venv.venv_dir, is_windows and "Scripts" or "bin")
+end
+
+local function comparable_path(path)
+  if not path or path == "" then
+    return nil
+  end
+
+  local normalized = vim.fs.normalize(path)
+  return is_windows and normalized:lower() or normalized
+end
+
+local function path_without_entries(path_value, entries)
+  if not path_value or path_value == "" then
+    return {}
+  end
+
+  local skip = {}
+  for _, entry in ipairs(entries) do
+    local key = comparable_path(entry)
+    if key then
+      skip[key] = true
+    end
+  end
+
+  local result = {}
+  for _, entry in ipairs(vim.split(path_value, path_separator, { plain = true })) do
+    local key = comparable_path(entry)
+    if entry ~= "" and not skip[key] then
+      table.insert(result, entry)
+    end
+  end
+
+  return result
+end
+
+local function apply_env(venv)
+  local bin_dir = venv_bin_dir(venv)
+
+  if not original_env then
+    original_env = {
+      PATH = vim.env.PATH,
+      VIRTUAL_ENV = vim.env.VIRTUAL_ENV,
+      UV_PROJECT_ENVIRONMENT = vim.env.UV_PROJECT_ENVIRONMENT,
+    }
+  end
+
+  local path_entries = path_without_entries(vim.env.PATH, { M._active_bin_dir, bin_dir })
+  table.insert(path_entries, 1, bin_dir)
+
+  vim.env.PATH = table.concat(path_entries, path_separator)
+  vim.env.VIRTUAL_ENV = venv.venv_dir
+  vim.env.UV_PROJECT_ENVIRONMENT = venv.venv_dir
+  M._active_bin_dir = bin_dir
+end
+
+local function restore_env()
+  if original_env then
+    vim.env.PATH = original_env.PATH
+    vim.env.VIRTUAL_ENV = original_env.VIRTUAL_ENV
+    vim.env.UV_PROJECT_ENVIRONMENT = original_env.UV_PROJECT_ENVIRONMENT
+    original_env = nil
+  elseif M._active_bin_dir then
+    vim.env.PATH = table.concat(path_without_entries(vim.env.PATH, { M._active_bin_dir }), path_separator)
+  end
+
+  M._active_bin_dir = nil
 end
 
 local function env_path(name)
@@ -194,21 +270,14 @@ function M.detect_for_dir(dir)
   return detect_env_venv()
 end
 
---- Detect the virtual environment for a buffer.
+--- Detect the manually-activated virtual environment.
+--- No longer auto-scans; only returns a venv if the user has activated one via <leader>ve.
 --- Returns { python_path, venv_name, venv_dir } or nil.
 function M.detect(bufnr)
-  bufnr = bufnr or vim.api.nvim_get_current_buf()
-
-  if cache[bufnr] ~= nil then
-    return cache[bufnr] ~= false and cache[bufnr] or nil
+  if M._active_venv then
+    return M._active_venv
   end
-
-  local bufpath = vim.api.nvim_buf_get_name(bufnr)
-  local source_dir = bufpath ~= "" and vim.fs.dirname(vim.fs.normalize(bufpath)) or vim.fn.getcwd()
-  local result = M.detect_for_dir(source_dir)
-
-  cache[bufnr] = result or false
-  return result
+  return nil
 end
 
 --- Return existing site-packages paths for a detected venv.
@@ -235,6 +304,49 @@ function M.get_site_packages(venv)
   end
 
   return paths
+end
+
+--- Build Pyright settings for the active venv.
+--- Includes site-packages so Pyright sees packages installed with `uv pip`.
+function M.pyright_settings(venv)
+  venv = venv or M.detect()
+  if not venv then
+    return nil
+  end
+
+  return {
+    python = {
+      pythonPath = venv.python_path,
+      venvPath = vim.fs.dirname(venv.venv_dir),
+      venv = venv.venv_name,
+      analysis = {
+        extraPaths = M.get_site_packages(venv),
+      },
+    },
+  }
+end
+
+--- Manually activate a virtual environment found from the given source directory.
+--- Sets process env vars, M._active_venv, and vim.g.python_venv_name.
+--- Returns { python_path, venv_name, venv_dir } or nil.
+function M.activate(source_dir)
+  local result = M.detect_for_dir(source_dir)
+  if result then
+    M._active_venv = result
+    apply_env(result)
+    vim.g.python_venv_name = result.venv_name
+    cache = {}
+    return result
+  end
+  return nil
+end
+
+--- Deactivate the currently active virtual environment.
+function M.deactivate()
+  M._active_venv = nil
+  vim.g.python_venv_name = ""
+  restore_env()
+  cache = {}
 end
 
 --- Get absolute path to the venv Python executable, or nil.
