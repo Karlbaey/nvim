@@ -54,6 +54,7 @@ return {
   },
   {
     "neovim/nvim-lspconfig",
+    cmd = { "LspInfo", "LspLog", "LspRestart", "LspStart", "LspStop" },
     event = { "BufReadPre", "BufNewFile" },
     dependencies = {
       "hrsh7th/cmp-nvim-lsp",
@@ -99,6 +100,61 @@ return {
         map("n", "<leader>ca", vim.lsp.buf.code_action, "Code action")
       end
 
+      local function apply_pyright_venv(config, root_dir)
+        local python_venv = require("config.python_venv")
+        local venv = python_venv.detect_for_dir(root_dir or config.root_dir)
+        if not venv then
+          return false
+        end
+
+        local python_settings = {
+          pythonPath = venv.python_path,
+          venvPath = vim.fs.dirname(venv.venv_dir),
+          venv = venv.venv_name,
+        }
+
+        local site_packages = python_venv.get_site_packages(venv)
+        if #site_packages > 0 then
+          python_settings.analysis = {
+            extraPaths = site_packages,
+          }
+        end
+
+        config.settings = vim.tbl_deep_extend("force", config.settings or {}, {
+          python = python_settings,
+        })
+        return true
+      end
+
+      local python_root_markers = {
+        "pyrightconfig.json",
+        "pyproject.toml",
+        "uv.lock",
+        ".python-version",
+        "requirements.txt",
+        "Pipfile",
+        "setup.py",
+        "setup.cfg",
+        ".venv",
+        "venv",
+        ".git",
+      }
+
+      local function pyright_root_dir(bufnr, on_dir)
+        local root = vim.fs.root(bufnr, python_root_markers)
+        if root then
+          on_dir(root)
+          return
+        end
+
+        local bufname = vim.api.nvim_buf_get_name(bufnr)
+        if bufname ~= "" then
+          on_dir(vim.fs.dirname(vim.fs.normalize(bufname)))
+        else
+          on_dir(vim.fn.getcwd())
+        end
+      end
+
       local servers = {
         gopls = {
           settings = {
@@ -123,21 +179,18 @@ return {
           },
         },
         pyright = {
+          root_dir = pyright_root_dir,
+          before_init = function(_, config)
+            apply_pyright_venv(config, config.root_dir)
+          end,
+          on_new_config = function(config, root_dir)
+            apply_pyright_venv(config, root_dir)
+          end,
           on_init = function(client)
-            -- Point pyright at the project venv so it resolves packages correctly
-            local root = client.config.root_dir
-            if root then
-              local venv = require("config.python_venv").scan_directory(root)
-              if venv then
-                client.config.settings = vim.tbl_deep_extend(
-                  "force",
-                  client.config.settings or {},
-                  { python = { pythonPath = venv.python_path } }
-                )
-                client.notify("workspace/didChangeConfiguration", {
-                  settings = client.config.settings,
-                })
-              end
+            if apply_pyright_venv(client.config, client.config.root_dir) then
+              client:notify("workspace/didChangeConfiguration", {
+                settings = client.config.settings,
+              })
             end
           end,
           settings = {
@@ -168,6 +221,64 @@ return {
         },
         ts_ls = {},
       }
+
+      local server_names = vim.tbl_keys(servers)
+
+      local function lsp_command_names(args)
+        if args.args ~= "" then
+          return vim.split(args.args, "%s+", { trimempty = true })
+        end
+        return server_names
+      end
+
+      local function complete_lsp_names(arg_lead)
+        return vim
+          .iter(server_names)
+          :filter(function(name)
+            return vim.startswith(name, arg_lead)
+          end)
+          :totable()
+      end
+
+      vim.api.nvim_create_user_command("LspStart", function(args)
+        vim.lsp.enable(lsp_command_names(args), true)
+      end, {
+        complete = complete_lsp_names,
+        desc = "Start configured LSP clients",
+        nargs = "*",
+      })
+
+      vim.api.nvim_create_user_command("LspStop", function(args)
+        vim.lsp.enable(lsp_command_names(args), false)
+      end, {
+        complete = complete_lsp_names,
+        desc = "Stop configured LSP clients",
+        nargs = "*",
+      })
+
+      vim.api.nvim_create_user_command("LspRestart", function(args)
+        local names = lsp_command_names(args)
+        vim.lsp.enable(names, false)
+        vim.defer_fn(function()
+          vim.lsp.enable(names, true)
+        end, 500)
+      end, {
+        complete = complete_lsp_names,
+        desc = "Restart configured LSP clients",
+        nargs = "*",
+      })
+
+      vim.api.nvim_create_user_command("LspInfo", function()
+        vim.cmd("checkhealth vim.lsp")
+      end, {
+        desc = "Show Neovim LSP health information",
+      })
+
+      vim.api.nvim_create_user_command("LspLog", function()
+        vim.cmd.edit(vim.fn.fnameescape(vim.lsp.log.get_filename()))
+      end, {
+        desc = "Open the Neovim LSP log",
+      })
 
       for server_name, server_config in pairs(servers) do
         vim.lsp.config(server_name, vim.tbl_deep_extend("force", {
