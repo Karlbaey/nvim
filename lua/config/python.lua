@@ -309,24 +309,27 @@ local function restart_pyright()
     return
   end
 
+  -- nvim 0.12 实测:`vim.lsp.enable("...", true)` 单独调用不会让已 attach 过的
+  -- buffer 重新生成新 client。可靠的重启序列是:
+  --   1) enable(false) 停用 config(异步,旧 client 不会立刻消失)
+  --   2) 等待旧 pyright client 真正 detach
+  --   3) enable(true) 重新启用 config
+  --   4) 对 python filetype buffer 重设 filetype 触发 FileType,命中 attach
+  -- 新 client 在 before_init 阶段读取正确的 venv settings。
   pcall(vim.lsp.enable, "pyright", false)
   vim.defer_fn(function()
+    vim.wait(2000, function() return #vim.lsp.get_clients({ name = "pyright" }) == 0 end, 50)
     pcall(vim.lsp.enable, "pyright", true)
-  end, 200)
-end
-
-local function notify_pyright_settings()
-  local pyright_settings = require("config.python_venv").pyright_settings()
-  if not pyright_settings then
-    return
-  end
-
-  for _, client in ipairs(vim.lsp.get_clients({ name = "pyright" })) do
-    client.config.settings = vim.tbl_deep_extend("force", client.config.settings or {}, pyright_settings)
-    client:notify("workspace/didChangeConfiguration", {
-      settings = client.config.settings,
-    })
-  end
+    vim.schedule(function()
+      for _, b in ipairs(vim.api.nvim_list_bufs()) do
+        if vim.api.nvim_buf_is_loaded(b) and vim.bo[b].filetype == "python" then
+          local ft = vim.bo[b].filetype
+          vim.bo[b].filetype = ""
+          vim.bo[b].filetype = ft
+        end
+      end
+    end)
+  end, 50)
 end
 
 function M.activate_venv(bufnr)
@@ -338,7 +341,9 @@ function M.activate_venv(bufnr)
     return
   end
 
-  notify_pyright_settings()
+  -- settings 由新 client 在 before_init/on_new_config (lsp.lua) 阶段干净读取,
+  -- 无需手动 notify —— Pyright 不响应 workspace/didChangeConfiguration 重算
+  -- import-resolver,只有 server 重启(重新 initialize)才会重读 venv settings。
   restart_pyright()
   vim.notify(("Python venv activated: %s"):format(venv.venv_dir), vim.log.levels.INFO)
 end

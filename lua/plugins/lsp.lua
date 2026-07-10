@@ -240,12 +240,51 @@ return {
         nargs = "*",
       })
 
+      -- server name → filetypes 映射,用于 LspRestart 后重新触发 attach
+      local server_filetypes = {
+        gopls = { "go" },
+        lua_ls = { "lua" },
+        pyright = { "python" },
+        ruff = { "python" },
+        ts_ls = { "typescript", "typescriptreact", "javascript", "javascriptreact" },
+      }
+
+      local function relaunch_filetypes(names)
+        local fts = {}
+        for _, n in ipairs(names) do
+          for _, ft in ipairs(server_filetypes[n] or {}) do
+            fts[ft] = true
+          end
+        end
+        for _, b in ipairs(vim.api.nvim_list_bufs()) do
+          if vim.api.nvim_buf_is_loaded(b) and fts[vim.bo[b].filetype] then
+            local ft = vim.bo[b].filetype
+            vim.bo[b].filetype = ""
+            vim.bo[b].filetype = ft
+          end
+        end
+      end
+
       vim.api.nvim_create_user_command("LspRestart", function(args)
         local names = lsp_command_names(args)
+        -- nvim 0.12:enable(false) 再 enable(true) 不会让已 attach 过的 buffer 重新
+        -- 生成新 client。可靠序列:停用 → 等旧 client detach → 重新启用 → 重触发
+        -- 对应 filetype 的 FileType 事件以命中 attach。
         vim.lsp.enable(names, false)
         vim.defer_fn(function()
-          vim.lsp.enable(names, true)
-        end, 500)
+          vim.wait(2000, function()
+            for _, n in ipairs(names) do
+              if #vim.lsp.get_clients({ name = n }) > 0 then
+                return false
+              end
+            end
+            return true
+          end, 50)
+          pcall(vim.lsp.enable, names, true)
+          vim.schedule(function()
+            relaunch_filetypes(names)
+          end)
+        end, 50)
       end, {
         complete = complete_lsp_names,
         desc = "Restart configured LSP clients",
