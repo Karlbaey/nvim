@@ -11,6 +11,7 @@ return {
         lua = true,
         markdown = true,
         python = true,
+        rust = true,
       }
 
       return {
@@ -22,6 +23,7 @@ return {
           lua = { "stylua" },
           markdown = { "prettierd" },
           python = { "ruff_fix", "ruff_organize_imports", "ruff_format" },
+          rust = { "rustfmt" },
           typescript = { "prettierd" },
           typescriptreact = { "prettierd" },
         },

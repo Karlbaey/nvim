@@ -22,6 +22,7 @@ return {
     },
     opts = {
       ensure_installed = {
+        "codelldb",
         "debugpy",
         "goimports",
         "gopls",
@@ -29,6 +30,7 @@ return {
         "prettierd",
         "pyright",
         "ruff",
+        "rust_analyzer",
         "stylua",
         "typescript-language-server",
       },
@@ -204,6 +206,19 @@ return {
           },
         },
         ts_ls = {},
+        -- rust_analyzer 的启动交给 rustaceanvim(lua/plugins/rust.lua),
+        -- 这里只注册 server 配置供 rustaceanvim 读取默认设置,
+        -- 不在本文件 enable,避免两边重复启动同一个 LSP client。
+        rust_analyzer = {
+          settings = {
+            ["rust-analyzer"] = {
+              check = {
+                command = "clippy",
+                extraArgs = { "--no-deps" },
+              },
+            },
+          },
+        },
       }
 
       local server_names = vim.tbl_keys(servers)
@@ -246,6 +261,7 @@ return {
         lua_ls = { "lua" },
         pyright = { "python" },
         ruff = { "python" },
+        rust_analyzer = { "rust" },
         ts_ls = { "typescript", "typescriptreact", "javascript", "javascriptreact" },
       }
 
@@ -308,7 +324,11 @@ return {
           capabilities = capabilities,
           on_attach = on_attach,
         }, server_config))
-        vim.lsp.enable(server_name)
+        if server_name ~= "rust_analyzer" then
+          -- rust_analyzer 的启动交给 rustaceanvim,避免重复启动。
+          -- 这里只做 config 注册,rustaceanvim 会在打开 Rust 文件时读取。
+          vim.lsp.enable(server_name)
+        end
       end
     end,
   },
