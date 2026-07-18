@@ -6,7 +6,7 @@
 return {
   {
     "mrcjkb/rustaceanvim",
-    version = "^6",
+    version = "^9",
     lazy = false,
     init = function()
       -- rustaceanvim 在 vim.lsp.enable 接管 rust-analyzer 之前读这套全局配置。
