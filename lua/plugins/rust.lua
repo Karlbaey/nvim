@@ -1,15 +1,14 @@
 -- Rust 编辑体验的整合插件。rustaceanvim 接管 rust-analyzer 的启动、
 -- 调试(codelldb)、cargo run/test 集成,并提供 RustLsp 命令族
--- (expandMacro / moveItem / joinLines 等)。因此 lsp.lua 里只注册
--- rust_analyzer 的 server 配置用于被 rustaceanvim 读取,但不 enable,
--- 避免两边重复启动同一个 LSP client。
+-- (expandMacro / moveItem / joinLines 等)。lsp.lua 不再注册 rust_analyzer,
+-- 避免通用 LSP 命令启动第二个 client 并产生重复 diagnostics。
 return {
   {
     "mrcjkb/rustaceanvim",
     version = "^9",
     lazy = false,
     init = function()
-      -- rustaceanvim 在 vim.lsp.enable 接管 rust-analyzer 之前读这套全局配置。
+      -- rustaceanvim 通过这套全局配置独立管理 rust-analyzer。
       local lsp = require("config.lsp")
       vim.g.rustaceanvim = {
         -- 让 rust-analyzer 在保存/编辑时跑 clippy,实时 lint。
