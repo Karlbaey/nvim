@@ -2,7 +2,7 @@ if not vim.g.neovide then
   return
 end
 
-vim.o.guifont = "JetBrainsMono NFM:h12"
+vim.o.guifont = "JetBrains Maple Mono:h18"
 
 vim.g.neovide_position_animation_length = 0.05
 vim.g.neovide_scroll_animation_length = 0.08

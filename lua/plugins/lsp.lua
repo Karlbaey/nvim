@@ -78,29 +78,7 @@ return {
         },
       })
 
-      local function on_attach(client, bufnr)
-        if client.name == "gopls" then
-          vim.lsp.semantic_tokens.enable(true, {
-            bufnr = bufnr,
-          })
-        end
-
-        local map = function(mode, lhs, rhs, desc)
-          vim.keymap.set(mode, lhs, rhs, {
-            buffer = bufnr,
-            desc = desc,
-            silent = true,
-          })
-        end
-
-        map("n", "K", vim.lsp.buf.hover, "Hover documentation")
-        map("n", "gd", vim.lsp.buf.definition, "Go to definition")
-        map("n", "gD", vim.lsp.buf.declaration, "Go to declaration")
-        map("n", "gi", vim.lsp.buf.implementation, "Go to implementation")
-        map("n", "gr", vim.lsp.buf.references, "Show references")
-        map("n", "<leader>rn", vim.lsp.buf.rename, "Rename symbol")
-        map("n", "<leader>ca", vim.lsp.buf.code_action, "Code action")
-      end
+      local on_attach = require("config.lsp").on_attach
 
       local function apply_pyright_venv(config)
         local pyright_settings = require("config.python_venv").pyright_settings()
@@ -283,9 +261,6 @@ return {
 
       vim.api.nvim_create_user_command("LspRestart", function(args)
         local names = lsp_command_names(args)
-        -- nvim 0.12:enable(false) 再 enable(true) 不会让已 attach 过的 buffer 重新
-        -- 生成新 client。可靠序列:停用 → 等旧 client detach → 重新启用 → 重触发
-        -- 对应 filetype 的 FileType 事件以命中 attach。
         vim.lsp.enable(names, false)
         vim.defer_fn(function()
           vim.wait(2000, function()
@@ -325,8 +300,6 @@ return {
           on_attach = on_attach,
         }, server_config))
         if server_name ~= "rust_analyzer" then
-          -- rust_analyzer 的启动交给 rustaceanvim,避免重复启动。
-          -- 这里只做 config 注册,rustaceanvim 会在打开 Rust 文件时读取。
           vim.lsp.enable(server_name)
         end
       end

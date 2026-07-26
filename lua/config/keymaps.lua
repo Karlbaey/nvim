@@ -1,5 +1,7 @@
 local map = vim.keymap.set
 
+map("i", "kj", "<Esc>", { desc = "Quit insert mode" })
+
 map("n", "<C-j>", function()
   require("config.runner").toggle_terminal()
 end, { desc = "Toggle terminal" })

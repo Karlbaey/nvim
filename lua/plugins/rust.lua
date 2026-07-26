@@ -10,10 +10,12 @@ return {
     lazy = false,
     init = function()
       -- rustaceanvim 在 vim.lsp.enable 接管 rust-analyzer 之前读这套全局配置。
+      local lsp = require("config.lsp")
       vim.g.rustaceanvim = {
         -- 让 rust-analyzer 在保存/编辑时跑 clippy,实时 lint。
         -- 等价于 lsp 配置 settings["rust-analyzer"].check.command = "clippy"。
         server = {
+          on_attach = lsp.on_attach,
           default_settings = {
             ["rust-analyzer"] = {
               check = {

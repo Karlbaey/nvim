@@ -35,7 +35,7 @@ return {
 
           return {
             lsp_fallback = true,
-            timeout_ms = filetype == "go" and 5000 or 1000,
+            timeout_ms = (filetype == "go" or filetype == "rust") and 5000 or 1000,
           }
         end,
       }
