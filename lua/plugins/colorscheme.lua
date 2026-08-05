@@ -1,11 +1,14 @@
 return {
   {
-    "tanvirtin/monokai.nvim",
+    "catppuccin/nvim",
+    name = "catppuccin",
     lazy = false,
     priority = 1000,
     config = function()
-      require("monokai").setup({})
-      vim.cmd.colorscheme("monokai")
+      require("catppuccin").setup({
+        flavour = "mocha",
+      })
+      vim.cmd.colorscheme("catppuccin")
     end,
   },
 }
