@@ -31,3 +31,7 @@ opt.completeopt = { "menu", "menuone", "noselect" }
 opt.clipboard = "unnamedplus"
 opt.fileformats = { "dos", "unix" }
 opt.fileformat = "dos"
+
+opt.errorbells = false
+opt.visualbell = false
+opt.belloff = "all"

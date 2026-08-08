@@ -10,6 +10,7 @@ local indent_by_ft = {
   typescriptreact = { shiftwidth = 2, tabstop = 2, softtabstop = 2, expandtab = true },
   python = { shiftwidth = 4, tabstop = 4, softtabstop = 4, expandtab = true },
   go = { shiftwidth = 4, tabstop = 4, softtabstop = 4, expandtab = false },
+  rust = { shiftwidth = 4, tabstop = 4, softtabstop = 4, expandtab = false },
 }
 
 autocmd("FileType", {
@@ -96,6 +97,7 @@ autocmd("FileType", {
     "typescriptreact",
     "go",
     "vim",
+    "rust",
   },
   callback = function(args)
     local ok = pcall(vim.treesitter.start, args.buf)

@@ -1,18 +1,11 @@
--- Rust 编辑体验的整合插件。rustaceanvim 接管 rust-analyzer 的启动、
--- 调试(codelldb)、cargo run/test 集成,并提供 RustLsp 命令族
--- (expandMacro / moveItem / joinLines 等)。lsp.lua 不再注册 rust_analyzer,
--- 避免通用 LSP 命令启动第二个 client 并产生重复 diagnostics。
 return {
   {
     "mrcjkb/rustaceanvim",
     version = "^9",
     lazy = false,
     init = function()
-      -- rustaceanvim 通过这套全局配置独立管理 rust-analyzer。
       local lsp = require("config.lsp")
       vim.g.rustaceanvim = {
-        -- 让 rust-analyzer 在保存/编辑时跑 clippy,实时 lint。
-        -- 等价于 lsp 配置 settings["rust-analyzer"].check.command = "clippy"。
         server = {
           on_attach = lsp.on_attach,
           default_settings = {
@@ -37,15 +30,9 @@ return {
                 renderColons = true,
                 typeHints = { enable = true },
               },
-              diagnostics = {
-                -- experimental 里 setTest 不动
-              },
             },
           },
         },
-        -- 调试交给 codelldb(mason 安装),rustaceanvim 自动识别。
-        -- 不在这里显式 setup,nvim-dap 在 dap.lua 里统一加载即可,
-        -- rustaceanvim 会在打开 Rust 程序时提供 DAP 配置。
       }
     end,
     keys = {
@@ -66,8 +53,6 @@ return {
     dependencies = { "nvim-lua/plenary.nvim" },
     opts = {
       src = {
-        -- 不在 lua/rust 源码里自动弹补全 crate 版本,避免干扰。
-        -- Cargo.toml 里的版本高亮和补全总是开。
         insert_crate = false,
       },
       popup = {

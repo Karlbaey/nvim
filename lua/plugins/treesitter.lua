@@ -92,6 +92,9 @@ return {
 
       nvim_treesitter.setup({
         install_dir = vim.fn.stdpath("data") .. "/site",
+        highlight = {
+          enable = true,
+        },
         indent = {
           enable = true,
         },
