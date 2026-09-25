@@ -76,7 +76,6 @@ LSP / Navigation
 ----------------
 K            Show hover documentation
 gd           Go to definition
-gD           Go to declaration
 gi           Go to implementation
 gr           Show references
 

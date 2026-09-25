@@ -17,7 +17,6 @@ function M.on_attach(client, bufnr)
 
   map("n", "K", vim.lsp.buf.hover, "Hover documentation")
   map("n", "gd", vim.lsp.buf.definition, "Go to definition")
-  map("n", "gD", vim.lsp.buf.declaration, "Go to declaration")
   map("n", "gi", vim.lsp.buf.implementation, "Go to implementation")
   map("n", "gr", vim.lsp.buf.references, "Show references")
   map("n", "<leader>rn", vim.lsp.buf.rename, "Rename symbol")
